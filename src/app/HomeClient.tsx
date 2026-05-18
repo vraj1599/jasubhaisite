@@ -5,7 +5,7 @@ import Link from 'next/link'
 import axios from 'axios'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, Shield, Truck, RefreshCw, Award, ChevronRight } from 'lucide-react'
-import ProductCard from '@/components/ProductCard'
+import ProductCard, { Product } from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
 const CATEGORIES = [
@@ -40,8 +40,8 @@ function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; del
 }
 
 export default function HomeClient() {
-  const [featured, setFeatured] = useState<Record<string, unknown>[]>([])
-  const [trending, setTrending] = useState<Record<string, unknown>[]>([])
+  const [featured, setFeatured] = useState<Product[]>([])
+  const [trending, setTrending] = useState<Product[]>([])
   const [loading, setLoading]   = useState(true)
   const [timeLeft, setTimeLeft] = useState({ h: 5, m: 47, s: 30 })
 
@@ -281,7 +281,7 @@ export default function HomeClient() {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {loading
                 ? Array(4).fill(0).map((_, i) => <SkeletonCard key={i} />)
-                : featured.map((p, i) => <ProductCard key={p._id as string} product={p as Parameters<typeof ProductCard>[0]['product']} index={i} />)
+                : featured.map((p, i) => <ProductCard key={p._id} product={p} index={i} />)
               }
             </div>
           </div>
@@ -304,7 +304,7 @@ export default function HomeClient() {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {loading
                 ? Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)
-                : trending.map((p, i) => <ProductCard key={p._id as string} product={p as Parameters<typeof ProductCard>[0]['product']} index={i} />)
+                : trending.map((p, i) => <ProductCard key={p._id} product={p} index={i} />)
               }
             </div>
           </div>

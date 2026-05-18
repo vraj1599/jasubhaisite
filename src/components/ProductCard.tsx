@@ -9,7 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
 import { useRouter } from 'next/navigation'
 
-interface Product {
+export interface Product {
   _id: string
   name: string
   slug: string
