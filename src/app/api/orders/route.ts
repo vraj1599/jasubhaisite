@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Cart is empty' }, { status: 400 })
     }
 
-    const items = cart.items.map((item) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const items = cart.items.map((item: any) => {
       const product = item.product as Record<string, unknown>
       return {
         product: product._id,
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       }
     })
 
-    const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
+    const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0)
     const shipping = subtotal > 499 ? 0 : 49
     const total    = subtotal + shipping
 

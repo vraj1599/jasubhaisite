@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import axios from 'axios'
 import { SlidersHorizontal, X, ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import ProductCard from '@/components/ProductCard'
+import ProductCard, { Product } from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
 const CATEGORIES = ['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Formal', 'Casual', 'Kids']
@@ -20,7 +20,7 @@ export default function ProductsClient() {
   const initCat      = searchParams.get('category') ?? ''
   const initSearch   = searchParams.get('search') ?? ''
 
-  const [products, setProducts] = useState<Record<string, unknown>[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading]   = useState(true)
   const [total, setTotal]       = useState(0)
   const [page, setPage]         = useState(1)
@@ -40,7 +40,7 @@ export default function ProductsClient() {
         ...(initSearch && { search: initSearch }),
       })
       const { data } = await axios.get(`/api/products?${params}`)
-      let prods = data.products as Record<string, unknown>[]
+      let prods = data.products as Product[]
 
       if (sort === 'price_asc')  prods = [...prods].sort((a, b) => (a.price as number) - (b.price as number))
       if (sort === 'price_desc') prods = [...prods].sort((a, b) => (b.price as number) - (a.price as number))
@@ -161,7 +161,7 @@ export default function ProductsClient() {
             {loading
               ? Array(12).fill(0).map((_, i) => <SkeletonCard key={i} />)
               : products.map((p, i) => (
-                  <ProductCard key={p._id as string} product={p as Parameters<typeof ProductCard>[0]['product']} index={i} />
+                  <ProductCard key={p._id} product={p} index={i} />
                 ))
             }
           </div>

@@ -34,7 +34,8 @@ export async function POST(req: NextRequest) {
     }
 
     const existingIdx = cart.items.findIndex(
-      (i) => i.product.toString() === productId && i.size === size
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (i: any) => i.product.toString() === productId && i.size === size
     )
 
     if (existingIdx > -1) {
@@ -91,7 +92,8 @@ export async function DELETE(req: NextRequest) {
     if (!cart) return NextResponse.json({ message: 'Cart not found' }, { status: 404 })
 
     if (itemId) {
-      cart.items = cart.items.filter((i) => i._id?.toString() !== itemId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      cart.items = cart.items.filter((i: any) => i._id?.toString() !== itemId)
     } else {
       cart.items = []
     }
