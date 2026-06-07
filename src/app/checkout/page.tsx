@@ -51,7 +51,7 @@ export default function CheckoutPage() {
       document.body.appendChild(s)
     })
 
-  const handlePayment = async () => {
+  const handlePayment = async (method?: string) => {
     setLoading(true)
     try {
       const loaded = await loadRazorpay()
@@ -60,7 +60,7 @@ export default function CheckoutPage() {
       const { data: rzpOrder } = await axios.post('/api/payment/create-order', { amount: total })
       const { data: order }    = await axios.post('/api/orders', { shippingAddress: address, razorpayOrderId: rzpOrder.orderId })
 
-      const options = {
+      const options: Record<string, unknown> = {
         key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         amount:      rzpOrder.amount,
         currency:    'INR',
@@ -84,6 +84,11 @@ export default function CheckoutPage() {
           }
         },
         modal: { ondismiss: () => setLoading(false) },
+      }
+
+      // Pre-select UPI if chosen
+      if (method === 'upi') {
+        options.config = { display: { blocks: { upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] } }, sequence: ['block.upi'], preferences: { show_default_blocks: false } } }
       }
 
       const rzp = new window.Razorpay(options)
@@ -197,26 +202,53 @@ export default function CheckoutPage() {
                 {/* Payment */}
                 {step === 'payment' && (
                   <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="bg-white rounded-2xl border border-gray-100 p-6">
-                    <h2 className="font-bold text-lg text-gray-900 mb-6">Payment</h2>
+                    <h2 className="font-bold text-lg text-gray-900 mb-4">Payment</h2>
                     <div className="bg-gray-50 rounded-xl p-4 mb-6 text-center">
                       <p className="text-gray-600 text-sm mb-1">Amount to pay</p>
                       <p className="text-4xl font-black text-gray-900">₹{Math.round(total)}</p>
                     </div>
-                    <p className="text-sm text-gray-500 mb-6 text-center">
-                      You will be redirected to Razorpay for secure payment
-                    </p>
-                    <div className="flex gap-3">
-                      <button onClick={() => setStep('review')} className="btn-outline flex-1">Back</button>
+
+                    {/* Payment options */}
+                    <div className="space-y-3 mb-6">
+                      {/* UPI */}
                       <motion.button
-                        onClick={handlePayment}
+                        onClick={() => handlePayment('upi')}
                         disabled={loading}
-                        whileTap={{ scale: 0.97 }}
-                        className="flex-1 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full flex items-center gap-4 p-4 border-2 border-green-200 hover:border-green-400 bg-green-50 hover:bg-green-100 rounded-xl transition-all disabled:opacity-60 text-left"
                       >
-                        <CreditCard size={20} />
-                        {loading ? 'Processing...' : 'Pay with Razorpay'}
+                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                          <span className="text-lg font-black text-green-600">₹</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-900 text-sm">Pay with UPI</p>
+                          <p className="text-xs text-gray-500">GPay, PhonePe, Paytm, BHIM & more</p>
+                        </div>
+                        <span className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-lg border border-green-200">Popular</span>
+                      </motion.button>
+
+                      {/* Card / Netbanking */}
+                      <motion.button
+                        onClick={() => handlePayment()}
+                        disabled={loading}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full flex items-center gap-4 p-4 border-2 border-gray-200 hover:border-blue-300 bg-white hover:bg-blue-50 rounded-xl transition-all disabled:opacity-60 text-left"
+                      >
+                        <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <CreditCard size={20} className="text-blue-500" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-bold text-gray-900 text-sm">Card / Net Banking / Wallet</p>
+                          <p className="text-xs text-gray-500">Visa, Mastercard, all banks & wallets</p>
+                        </div>
                       </motion.button>
                     </div>
+
+                    {loading && (
+                      <p className="text-center text-sm text-gray-500 mb-4 animate-pulse">Opening payment gateway...</p>
+                    )}
+
+                    <button onClick={() => setStep('review')} className="btn-outline w-full">Back</button>
                   </motion.div>
                 )}
               </div>
