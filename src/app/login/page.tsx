@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
@@ -8,7 +8,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import toast from 'react-hot-toast'
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail]     = useState('')
   const [password, setPass]   = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -107,5 +107,13 @@ export default function LoginPage() {
         </div>
       </motion.div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }
