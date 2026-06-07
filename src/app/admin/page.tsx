@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { ShoppingCart, Users, Package, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import { ShoppingCart, Users, Package, IndianRupee, TrendingUp, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface Stats {
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   }, [])
 
   const cards = [
-    { label: 'Total Revenue',   value: stats ? `₹${stats.totalRevenue.toLocaleString('en-IN')}` : '—', icon: DollarSign,   color: 'text-amber-400',  bg: 'bg-amber-500/10' },
+    { label: 'Total Revenue',   value: stats ? `₹${stats.totalRevenue.toLocaleString('en-IN')}` : '—', icon: IndianRupee,  color: 'text-amber-400',  bg: 'bg-amber-500/10' },
     { label: 'Total Orders',    value: stats?.totalOrders   ?? '—', icon: ShoppingCart, color: 'text-blue-400',   bg: 'bg-blue-500/10' },
     { label: 'Total Users',     value: stats?.totalUsers    ?? '—', icon: Users,        color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { label: 'Active Products', value: stats?.totalProducts ?? '—', icon: Package,      color: 'text-green-400',  bg: 'bg-green-500/10' },
