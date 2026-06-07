@@ -5,7 +5,9 @@ export interface IUser extends Document {
   name: string
   email: string
   phone: string
-  password: string
+  password?: string
+  googleId?: string
+  avatar?: string
   role: 'user' | 'admin'
   address: {
     line1: string
@@ -21,11 +23,13 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
-    role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    name:     { type: String, required: true, trim: true },
+    email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
+    phone:    { type: String, default: '', trim: true },
+    password: { type: String, default: null },
+    googleId: { type: String, default: null, index: true },
+    avatar:   { type: String, default: '' },
+    role:     { type: String, enum: ['user', 'admin'], default: 'user' },
     address: {
       line1:    { type: String, default: '' },
       locality: { type: String, default: '' },
@@ -39,12 +43,13 @@ const UserSchema = new Schema<IUser>(
 )
 
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next()
+  if (!this.isModified('password') || !this.password) return next()
   this.password = await bcrypt.hash(this.password, 12)
   next()
 })
 
 UserSchema.methods.comparePassword = function (candidate: string) {
+  if (!this.password) return Promise.resolve(false)
   return bcrypt.compare(candidate, this.password)
 }
 
