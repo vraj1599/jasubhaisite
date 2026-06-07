@@ -49,21 +49,22 @@ export default function AdminProductsPage() {
   )
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 md:mb-8 gap-3">
         <div>
-          <h1 className="text-3xl font-black text-white">Products</h1>
-          <p className="text-gray-400 mt-1">{products.length} total products</p>
+          <h1 className="text-2xl md:text-3xl font-black text-white">Products</h1>
+          <p className="text-gray-400 mt-0.5 text-sm">{products.length} total products</p>
         </div>
         <Link href="/admin/products/new">
-          <motion.button whileTap={{ scale: 0.97 }} className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-amber-900/30">
-            <Plus size={18} /> Add Product
+          <motion.button whileTap={{ scale: 0.97 }} className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-amber-900/30 text-sm whitespace-nowrap">
+            <Plus size={16} /> <span className="hidden sm:inline">Add Product</span><span className="sm:hidden">Add</span>
           </motion.button>
         </Link>
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
+      <div className="relative mb-4 md:mb-6">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
@@ -74,7 +75,74 @@ export default function AdminProductsPage() {
         />
       </div>
 
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          Array(4).fill(0).map((_, i) => (
+            <div key={i} className="bg-gray-800 rounded-2xl border border-gray-700 p-4 flex gap-3 animate-pulse">
+              <div className="w-16 h-16 bg-gray-700 rounded-xl flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-700 rounded w-3/4" />
+                <div className="h-3 bg-gray-700 rounded w-1/2" />
+                <div className="h-3 bg-gray-700 rounded w-1/3" />
+              </div>
+            </div>
+          ))
+        ) : filtered.map((product, i) => {
+          const salePrice = product.price - (product.price * product.discount) / 100
+          return (
+            <motion.div
+              key={product._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="bg-gray-800 rounded-2xl border border-gray-700 p-4"
+            >
+              <div className="flex gap-3">
+                <div className="w-16 h-16 bg-gray-700 rounded-xl overflow-hidden flex-shrink-0">
+                  {product.images[0]?.url && (
+                    <Image src={product.images[0].url} alt={product.name} width={64} height={64} className="object-cover w-full h-full" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-sm truncate">{product.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded-lg">{product.category}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-lg font-semibold ${product.isActive ? 'bg-green-400/10 text-green-400' : 'bg-red-400/10 text-red-400'}`}>
+                      {product.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <div>
+                      <span className="text-white font-bold text-sm">₹{Math.round(salePrice)}</span>
+                      {product.discount > 0 && <span className="text-gray-500 text-xs line-through ml-1">₹{product.price}</span>}
+                    </div>
+                    <span className={`text-xs font-semibold ${product.stock === 0 ? 'text-red-400' : product.stock < 10 ? 'text-yellow-400' : 'text-green-400'}`}>
+                      Stock: {product.stock}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-3 pt-3 border-t border-gray-700">
+                <Link href={`/admin/products/${product._id}/edit`} className="flex-1">
+                  <button className="w-full flex items-center justify-center gap-1.5 py-2 text-amber-400 bg-amber-400/10 hover:bg-amber-400/20 rounded-xl text-sm font-medium transition-colors">
+                    <Edit size={14} /> Edit
+                  </button>
+                </Link>
+                <button
+                  onClick={() => handleDelete(product._id, product.name)}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 text-red-400 bg-red-400/10 hover:bg-red-400/20 rounded-xl text-sm font-medium transition-colors"
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -92,7 +160,7 @@ export default function AdminProductsPage() {
                 Array(6).fill(0).map((_, i) => (
                   <tr key={i}>
                     {Array(6).fill(0).map((_, j) => (
-                      <td key={j} className="px-4 py-4"><div className="skeleton h-4 w-full rounded" /></td>
+                      <td key={j} className="px-4 py-4"><div className="h-4 w-full bg-gray-700 rounded animate-pulse" /></td>
                     ))}
                   </tr>
                 ))

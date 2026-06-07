@@ -28,8 +28,8 @@ interface Order {
 }
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders]     = useState<Order[]>([])
-  const [loading, setLoading]   = useState(true)
+  const [orders, setOrders]           = useState<Order[]>([])
+  const [loading, setLoading]         = useState(true)
   const [filterStatus, setFilterStatus] = useState('')
 
   const fetchOrders = () => {
@@ -52,26 +52,76 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 md:p-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6 md:mb-8 gap-3 flex-wrap">
         <div>
-          <h1 className="text-3xl font-black text-white">Orders</h1>
-          <p className="text-gray-400 mt-1">{orders.length} orders</p>
+          <h1 className="text-2xl md:text-3xl font-black text-white">Orders</h1>
+          <p className="text-gray-400 mt-0.5 text-sm">{orders.length} orders</p>
         </div>
         <div className="relative">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="appearance-none pl-4 pr-10 py-2.5 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+            className="appearance-none pl-3 pr-8 py-2 bg-gray-800 border border-gray-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
           >
             <option value="">All Status</option>
-            {STATUSES.map((s) => <option key={s} value={s} className="capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+            {STATUSES.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
-      <div className="bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          Array(4).fill(0).map((_, i) => (
+            <div key={i} className="bg-gray-800 rounded-2xl border border-gray-700 p-4 space-y-2 animate-pulse">
+              <div className="h-4 bg-gray-700 rounded w-1/3" />
+              <div className="h-3 bg-gray-700 rounded w-1/2" />
+              <div className="h-3 bg-gray-700 rounded w-2/3" />
+            </div>
+          ))
+        ) : orders.map((order) => (
+          <div key={order._id} className="bg-gray-800 rounded-2xl border border-gray-700 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-amber-400 font-mono text-xs font-semibold">#{order._id.slice(-8).toUpperCase()}</span>
+              <span className="text-xs text-gray-500">
+                {new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+
+            <p className="text-white font-semibold text-sm">{order.user?.name}</p>
+            <p className="text-gray-500 text-xs mb-2">
+              {order.shippingAddress?.city}, {order.shippingAddress?.state}
+            </p>
+
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-bold text-sm">₹{Math.round(order.total)}</span>
+                <span className="text-gray-500 text-xs">{order.items?.length} item(s)</span>
+              </div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg capitalize ${order.paymentStatus === 'paid' ? 'bg-green-400/10 text-green-400' : 'bg-yellow-400/10 text-yellow-400'}`}>
+                {order.paymentStatus}
+              </span>
+            </div>
+
+            <div className="relative">
+              <select
+                value={order.status}
+                onChange={(e) => updateStatus(order._id, e.target.value)}
+                className={`w-full appearance-none pl-3 pr-8 py-2 rounded-xl text-xs font-semibold border border-gray-600 bg-gray-700 text-white focus:outline-none cursor-pointer`}
+              >
+                {STATUSES.map((s) => <option key={s} value={s} className="bg-gray-800 capitalize">{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+              </select>
+              <ChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-gray-800 rounded-2xl border border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -88,7 +138,7 @@ export default function AdminOrdersPage() {
             <tbody className="divide-y divide-gray-700/50">
               {loading ? (
                 Array(8).fill(0).map((_, i) => (
-                  <tr key={i}>{Array(7).fill(0).map((_, j) => <td key={j} className="px-5 py-4"><div className="skeleton h-4 w-full rounded" /></td>)}</tr>
+                  <tr key={i}>{Array(7).fill(0).map((_, j) => <td key={j} className="px-5 py-4"><div className="h-4 w-full bg-gray-700 rounded animate-pulse" /></td>)}</tr>
                 ))
               ) : orders.map((order) => (
                 <tr key={order._id} className="hover:bg-gray-700/30 transition-colors">
