@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingCart, Users, Plus, LogOut, X, Megaphone, Sparkles } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Plus, LogOut, X, Megaphone, Sparkles, Settings } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -13,6 +13,7 @@ const navItems = [
   { href: '/admin/users',    icon: Users,           label: 'Users' },
   { href: '/admin/banners',  icon: Megaphone,       label: 'Banners' },
   { href: '/admin/homepage', icon: Sparkles,        label: 'Homepage' },
+  { href: '/admin/settings', icon: Settings,        label: 'Settings' },
 ]
 
 interface Props {

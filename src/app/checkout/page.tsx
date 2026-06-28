@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Navbar from '@/components/Navbar'
 import { useCart } from '@/context/CartContext'
 import { useAuth } from '@/context/AuthContext'
+import { calcShipping, DEFAULT_SHIPPING, type ShippingSettings } from '@/lib/shipping'
 import axios from 'axios'
 import { motion } from 'framer-motion'
 import { CheckCircle, CreditCard, MapPin, ShoppingBag } from 'lucide-react'
@@ -24,8 +25,15 @@ export default function CheckoutPage() {
   const router     = useRouter()
   const [step, setStep]   = useState<Step>('address')
   const [loading, setLoading] = useState(false)
+  const [shipSettings, setShipSettings] = useState<ShippingSettings>(DEFAULT_SHIPPING)
 
-  const shipping = subtotal > 499 ? 0 : 49
+  useEffect(() => {
+    axios.get('/api/store-settings')
+      .then(({ data }) => setShipSettings({ shippingCharge: data.shippingCharge, freeShippingThreshold: data.freeShippingThreshold }))
+      .catch(() => {})
+  }, [])
+
+  const shipping = calcShipping(subtotal, shipSettings)
   const total    = subtotal + shipping
 
   const [address, setAddress] = useState({

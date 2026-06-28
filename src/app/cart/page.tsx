@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import axios from 'axios'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { useCart } from '@/context/CartContext'
+import { calcShipping, DEFAULT_SHIPPING, type ShippingSettings } from '@/lib/shipping'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -13,8 +15,15 @@ export default function CartPage() {
   const { items, totalItems, subtotal, updateItem, removeItem } = useCart()
   const [coupon, setCoupon]   = useState('')
   const [discount, setDiscount] = useState(0)
+  const [shipSettings, setShipSettings] = useState<ShippingSettings>(DEFAULT_SHIPPING)
 
-  const shipping = subtotal > 499 ? 0 : 49
+  useEffect(() => {
+    axios.get('/api/store-settings')
+      .then(({ data }) => setShipSettings({ shippingCharge: data.shippingCharge, freeShippingThreshold: data.freeShippingThreshold }))
+      .catch(() => {})
+  }, [])
+
+  const shipping = calcShipping(subtotal, shipSettings)
   const total    = subtotal - discount + shipping
 
   const applyCoupon = () => {
@@ -146,8 +155,8 @@ export default function CartPage() {
                         {shipping === 0 ? 'FREE' : `₹${shipping}`}
                       </span>
                     </div>
-                    {shipping > 0 && (
-                      <p className="text-xs text-amber-600">Add ₹{499 - subtotal} more for free shipping</p>
+                    {shipping > 0 && shipSettings.freeShippingThreshold > 0 && (
+                      <p className="text-xs text-amber-600">Add ₹{Math.max(0, shipSettings.freeShippingThreshold - subtotal)} more for free shipping</p>
                     )}
                     <div className="border-t border-gray-100 pt-3 flex justify-between">
                       <span className="font-black text-gray-900">Total</span>

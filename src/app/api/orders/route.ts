@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import Order from '@/models/Order'
 import Cart from '@/models/Cart'
+import StoreSettings from '@/models/StoreSettings'
 import { requireAuth } from '@/lib/auth'
+import { calcShipping, DEFAULT_SHIPPING } from '@/lib/shipping'
 
 export async function GET(req: NextRequest) {
   try {
@@ -42,7 +44,10 @@ export async function POST(req: NextRequest) {
     })
 
     const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0)
-    const shipping = subtotal > 499 ? 0 : 49
+
+    // Shipping is computed server-side from admin settings (authoritative).
+    const settings = await StoreSettings.findOne().lean<{ shippingCharge: number; freeShippingThreshold: number }>()
+    const shipping = calcShipping(subtotal, settings ?? DEFAULT_SHIPPING)
     const total    = subtotal + shipping
 
     const order = await Order.create({
