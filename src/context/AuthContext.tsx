@@ -47,13 +47,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (saved) {
       setToken(saved)
       axios.defaults.headers.common['Authorization'] = `Bearer ${saved}`
-      axios.get('/api/auth/me')
-        .then(({ data }) => setUser(data.user))
-        .catch(() => { localStorage.removeItem('jc_token'); setToken(null) })
-        .finally(() => setLoading(false))
-    } else {
-      setLoading(false)
     }
+    // Always verify the session against the server. This also picks up the
+    // httpOnly cookie set by Google OAuth login (which never touches
+    // localStorage), so the UI reflects a logged-in state after the redirect.
+    axios.get('/api/auth/me')
+      .then(({ data }) => setUser(data.user))
+      .catch(() => {
+        localStorage.removeItem('jc_token')
+        setToken(null)
+        delete axios.defaults.headers.common['Authorization']
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const login = async (email: string, password: string) => {
