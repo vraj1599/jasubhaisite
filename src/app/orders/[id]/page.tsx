@@ -99,7 +99,7 @@ function printInvoice(order: OrderDetail) {
       <div class="invoice-title">INVOICE</div>
       <div class="meta-line">#${order._id.slice(-8).toUpperCase()}</div>
       <div class="meta-line">${date}</div>
-      <div class="meta-line" style="margin-top:6px"><span class="status-badge">PAID</span></div>
+      <div class="meta-line" style="margin-top:6px"><span class="status-badge"${order.paymentStatus === 'paid' ? '' : ' style="background:#fef3c7;color:#92400e"'}>${order.paymentStatus.toUpperCase()}</span></div>
     </div>
   </div>
 

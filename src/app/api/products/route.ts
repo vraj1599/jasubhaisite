@@ -10,6 +10,9 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category')
     const search   = searchParams.get('search')
     const featured = searchParams.get('featured')
+    const sort     = searchParams.get('sort')
+    const minPrice = parseFloat(searchParams.get('minPrice') ?? '')
+    const maxPrice = parseFloat(searchParams.get('maxPrice') ?? '')
     const page     = parseInt(searchParams.get('page') ?? '1')
     const limit    = parseInt(searchParams.get('limit') ?? '12')
 
@@ -18,9 +21,23 @@ export async function GET(req: NextRequest) {
     if (featured === 'true') query.featured = true
     if (search) query.name = { $regex: search, $options: 'i' }
 
+    if (!Number.isNaN(minPrice) || !Number.isNaN(maxPrice)) {
+      const priceQ: Record<string, number> = {}
+      if (!Number.isNaN(minPrice)) priceQ.$gte = minPrice
+      if (!Number.isNaN(maxPrice)) priceQ.$lte = maxPrice
+      query.price = priceQ
+    }
+
+    const sortMap: Record<string, Record<string, 1 | -1>> = {
+      price_asc:  { price: 1 },
+      price_desc: { price: -1 },
+      newest:     { createdAt: -1 },
+    }
+    const sortObj = sortMap[sort ?? 'newest'] ?? { createdAt: -1 }
+
     const total    = await Product.countDocuments(query)
     const products = await Product.find(query)
-      .sort({ createdAt: -1 })
+      .sort(sortObj)
       .skip((page - 1) * limit)
       .limit(limit)
       .lean()

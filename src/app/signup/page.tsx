@@ -108,10 +108,10 @@ export default function SignupPage() {
               <input
                 className={`${inputClass} pr-12`}
                 type={showPass ? 'text' : 'password'}
-                placeholder="Password (min 6 chars) *"
+                placeholder="Password (min 8 chars) *"
                 value={form.password}
                 onChange={(e) => set('password', e.target.value)}
-                required minLength={6}
+                required minLength={8}
               />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}

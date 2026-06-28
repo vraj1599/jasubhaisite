@@ -33,30 +33,28 @@ export default function ProductsClient() {
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     try {
+      // All sorting/filtering happens server-side so it spans the whole catalog,
+      // not just the current page.
       const params = new URLSearchParams({
         page: String(page),
         limit: '12',
+        sort,
+        minPrice: String(priceRange[0]),
+        maxPrice: String(priceRange[1]),
         ...(category && { category }),
         ...(initSearch && { search: initSearch }),
       })
       const { data } = await axios.get(`/api/products?${params}`)
-      let prods = data.products as Product[]
-
-      if (sort === 'price_asc')  prods = [...prods].sort((a, b) => (a.price as number) - (b.price as number))
-      if (sort === 'price_desc') prods = [...prods].sort((a, b) => (b.price as number) - (a.price as number))
-
-      prods = prods.filter((p) => {
-        const sp = (p.price as number) - ((p.price as number) * (p.discount as number)) / 100
-        return sp >= priceRange[0] && sp <= priceRange[1]
-      })
-
-      setProducts(prods)
+      setProducts(data.products as Product[])
       setTotal(data.total)
       setPages(data.pages)
     } finally {
       setLoading(false)
     }
   }, [page, category, sort, initSearch, priceRange])
+
+  // Reset to page 1 whenever a filter/sort changes so results stay consistent.
+  useEffect(() => { setPage(1) }, [category, sort, priceRange, initSearch])
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 

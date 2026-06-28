@@ -5,13 +5,17 @@ import { CartProvider } from '@/context/CartContext'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://jasubhaichappal.com'),
   title: { default: 'Jasubhai Chappal – Comfort Footwear', template: '%s | Jasubhai Chappal' },
   description: 'Premium Indian footwear — Chappals, Kolhapuri, Sandals & more. Comfort starts at ₹199.',
   keywords: ['chappal', 'footwear', 'kolhapuri', 'sandals', 'Indian shoes', 'Jasubhai'],
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Jasubhai Chappal',
     description: 'Comfort footwear for every step.',
     type: 'website',
+    url: 'https://jasubhaichappal.com',
+    siteName: 'Jasubhai Chappal',
   },
 }
 

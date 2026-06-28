@@ -34,7 +34,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Shop</h4>
             <ul className="space-y-2.5 text-sm">
-              {['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Kids', 'New Arrivals'].map((cat) => (
+              {['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Kids'].map((cat) => (
                 <li key={cat}>
                   <Link href={`/products?category=${cat}`} className="hover:text-amber-400 transition-colors duration-200">
                     {cat}

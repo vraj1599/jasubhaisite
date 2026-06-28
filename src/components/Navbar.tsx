@@ -33,7 +33,7 @@ export default function Navbar() {
     }
   }
 
-  const categories = ['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Kids']
+  const categories = ['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Kids']
 
   return (
     <>
