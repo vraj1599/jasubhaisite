@@ -5,10 +5,12 @@ import Cart from '@/models/Cart'
 import StoreSettings from '@/models/StoreSettings'
 import { requireAuth } from '@/lib/auth'
 import { calcShipping, DEFAULT_SHIPPING } from '@/lib/shipping'
+import { resolveCoupon } from '@/lib/couponServer'
 
 export async function POST(req: NextRequest) {
   try {
     const { userId } = requireAuth(req)
+    const body = await req.json().catch(() => ({}))
     await connectDB()
 
     // SECURITY: never trust a client-supplied amount. Compute it from the
@@ -24,7 +26,8 @@ export async function POST(req: NextRequest) {
     )
     const settings = await StoreSettings.findOne().lean<{ shippingCharge: number; freeShippingThreshold: number }>()
     const shipping = calcShipping(subtotal, settings ?? DEFAULT_SHIPPING)
-    const total    = subtotal + shipping
+    const { discount } = await resolveCoupon(body.couponCode, subtotal)
+    const total    = subtotal - discount + shipping
 
     const order = await razorpay.orders.create({
       amount: Math.round(total * 100),

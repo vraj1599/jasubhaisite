@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db'
 import Order from '@/models/Order'
 import Cart from '@/models/Cart'
 import Product from '@/models/Product'
+import Coupon from '@/models/Coupon'
 import { razorpay, verifyRazorpaySignature } from '@/lib/razorpay'
 import { requireAuth } from '@/lib/auth'
 
@@ -51,6 +52,11 @@ export async function POST(req: NextRequest) {
         )
       )
     )
+
+    // Count the coupon use now that the order is actually paid.
+    if (order.couponCode) {
+      await Coupon.updateOne({ code: order.couponCode }, { $inc: { usedCount: 1 } })
+    }
 
     await Cart.findOneAndUpdate({ user: userId }, { items: [] })
 

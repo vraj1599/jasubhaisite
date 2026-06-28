@@ -10,25 +10,59 @@ import { useCart } from '@/context/CartContext'
 import { calcShipping, DEFAULT_SHIPPING, type ShippingSettings } from '@/lib/shipping'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, Tag } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import toast from 'react-hot-toast'
 
 export default function CartPage() {
   const { items, totalItems, subtotal, updateItem, removeItem } = useCart()
   const [coupon, setCoupon]   = useState('')
   const [discount, setDiscount] = useState(0)
+  const [appliedCode, setAppliedCode] = useState('')
+  const [couponMsg, setCouponMsg] = useState('')
   const [shipSettings, setShipSettings] = useState<ShippingSettings>(DEFAULT_SHIPPING)
 
   useEffect(() => {
     axios.get('/api/store-settings')
       .then(({ data }) => setShipSettings({ shippingCharge: data.shippingCharge, freeShippingThreshold: data.freeShippingThreshold }))
       .catch(() => {})
+    const saved = localStorage.getItem('jc_coupon')
+    if (saved) setCoupon(saved)
   }, [])
+
+  // Keep a previously applied coupon in sync as the cart subtotal changes.
+  useEffect(() => {
+    const code = localStorage.getItem('jc_coupon')
+    if (!code || subtotal <= 0) return
+    axios.post('/api/coupons/validate', { code, subtotal })
+      .then(({ data }) => {
+        if (data.valid) { setDiscount(data.discount); setAppliedCode(data.code) }
+        else { setDiscount(0); setAppliedCode(''); localStorage.removeItem('jc_coupon') }
+      })
+      .catch(() => {})
+  }, [subtotal])
 
   const shipping = calcShipping(subtotal, shipSettings)
   const total    = subtotal - discount + shipping
 
-  const applyCoupon = () => {
-    if (coupon.toUpperCase() === 'WELCOME10') setDiscount(Math.round(subtotal * 0.1))
-    else if (coupon.toUpperCase() === 'FLAT50') setDiscount(50)
+  const applyCoupon = async () => {
+    if (!coupon.trim()) return
+    try {
+      const { data } = await axios.post('/api/coupons/validate', { code: coupon, subtotal })
+      if (data.valid) {
+        setDiscount(data.discount); setAppliedCode(data.code); setCouponMsg('')
+        localStorage.setItem('jc_coupon', data.code)
+        toast.success(data.message)
+      } else {
+        setDiscount(0); setAppliedCode(''); setCouponMsg(data.message || 'Invalid coupon code')
+        localStorage.removeItem('jc_coupon')
+      }
+    } catch {
+      toast.error('Could not validate coupon')
+    }
+  }
+
+  const removeCoupon = () => {
+    setDiscount(0); setAppliedCode(''); setCoupon(''); setCouponMsg('')
+    localStorage.removeItem('jc_coupon')
   }
 
   return (
@@ -132,7 +166,15 @@ export default function CartPage() {
                       Apply
                     </button>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Try: WELCOME10 or FLAT50</p>
+                  {appliedCode ? (
+                    <p className="text-xs text-green-600 mt-2">
+                      Applied <b>{appliedCode}</b> — <button onClick={removeCoupon} className="underline hover:text-green-700">remove</button>
+                    </p>
+                  ) : couponMsg ? (
+                    <p className="text-xs text-red-500 mt-2">{couponMsg}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400 mt-2">Have a coupon code? Enter it above.</p>
+                  )}
                 </div>
 
                 {/* Price Summary */}

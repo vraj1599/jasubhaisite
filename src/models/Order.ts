@@ -23,6 +23,8 @@ export interface IOrder extends Document {
     pincode: string
   }
   subtotal: number
+  discount: number
+  couponCode: string
   shipping: number
   total: number
   status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
@@ -57,6 +59,8 @@ const OrderSchema = new Schema<IOrder>(
       pincode:  { type: String, required: true },
     },
     subtotal:         { type: Number, required: true },
+    discount:         { type: Number, default: 0 },
+    couponCode:       { type: String, default: '' },
     shipping:         { type: Number, default: 0 },
     total:            { type: Number, required: true },
     status:           { type: String, enum: ['pending','confirmed','processing','shipped','delivered','cancelled'], default: 'pending' },

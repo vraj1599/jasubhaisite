@@ -26,15 +26,30 @@ export default function CheckoutPage() {
   const [step, setStep]   = useState<Step>('address')
   const [loading, setLoading] = useState(false)
   const [shipSettings, setShipSettings] = useState<ShippingSettings>(DEFAULT_SHIPPING)
+  const [couponCode, setCouponCode] = useState('')
+  const [discount, setDiscount]     = useState(0)
 
   useEffect(() => {
     axios.get('/api/store-settings')
       .then(({ data }) => setShipSettings({ shippingCharge: data.shippingCharge, freeShippingThreshold: data.freeShippingThreshold }))
       .catch(() => {})
+    setCouponCode(localStorage.getItem('jc_coupon') ?? '')
   }, [])
 
+  // Validate the carried-over coupon against the current subtotal.
+  useEffect(() => {
+    const code = localStorage.getItem('jc_coupon')
+    if (!code || subtotal <= 0) { setDiscount(0); setCouponCode(''); return }
+    axios.post('/api/coupons/validate', { code, subtotal })
+      .then(({ data }) => {
+        if (data.valid) { setDiscount(data.discount); setCouponCode(data.code) }
+        else { setDiscount(0); setCouponCode(''); localStorage.removeItem('jc_coupon') }
+      })
+      .catch(() => {})
+  }, [subtotal])
+
   const shipping = calcShipping(subtotal, shipSettings)
-  const total    = subtotal + shipping
+  const total    = subtotal - discount + shipping
 
   const [address, setAddress] = useState({
     name:     user?.name ?? '',
@@ -65,8 +80,8 @@ export default function CheckoutPage() {
       const loaded = await loadRazorpay()
       if (!loaded) { toast.error('Payment gateway failed to load'); return }
 
-      const { data: rzpOrder } = await axios.post('/api/payment/create-order', { amount: total })
-      const { data: order }    = await axios.post('/api/orders', { shippingAddress: address, razorpayOrderId: rzpOrder.orderId })
+      const { data: rzpOrder } = await axios.post('/api/payment/create-order', { couponCode })
+      const { data: order }    = await axios.post('/api/orders', { shippingAddress: address, razorpayOrderId: rzpOrder.orderId, couponCode })
 
       const options: Record<string, unknown> = {
         key:         process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -86,6 +101,7 @@ export default function CheckoutPage() {
               orderId:           order.order._id,
             })
             clearCart()
+            localStorage.removeItem('jc_coupon')
             setStep('success')
           } catch {
             toast.error('Payment verification failed')
@@ -198,6 +214,9 @@ export default function CheckoutPage() {
                     </div>
                     <div className="border-t pt-4 space-y-2 text-sm mb-6">
                       <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>₹{Math.round(subtotal)}</span></div>
+                      {discount > 0 && (
+                        <div className="flex justify-between text-green-600"><span>Coupon ({couponCode})</span><span>-₹{discount}</span></div>
+                      )}
                       <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping === 0 ? 'text-green-600' : ''}>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span></div>
                       <div className="flex justify-between font-black text-gray-900 text-base pt-2 border-t"><span>Total</span><span>₹{Math.round(total)}</span></div>
                     </div>
@@ -267,6 +286,9 @@ export default function CheckoutPage() {
                 <h3 className="font-bold text-gray-900 mb-4">Order Summary</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between text-gray-600"><span>{items.length} item(s)</span><span>₹{Math.round(subtotal)}</span></div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-green-600"><span>Coupon ({couponCode})</span><span>-₹{discount}</span></div>
+                  )}
                   <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping === 0 ? 'text-green-600' : ''}>{shipping === 0 ? 'FREE' : `₹${shipping}`}</span></div>
                   <div className="flex justify-between font-black text-gray-900 pt-2 border-t"><span>Total</span><span>₹{Math.round(total)}</span></div>
                 </div>

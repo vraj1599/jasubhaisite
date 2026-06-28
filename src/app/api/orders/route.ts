@@ -5,6 +5,7 @@ import Cart from '@/models/Cart'
 import StoreSettings from '@/models/StoreSettings'
 import { requireAuth } from '@/lib/auth'
 import { calcShipping, DEFAULT_SHIPPING } from '@/lib/shipping'
+import { resolveCoupon } from '@/lib/couponServer'
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
   try {
     const { userId } = requireAuth(req)
     await connectDB()
-    const { shippingAddress, razorpayOrderId } = await req.json()
+    const { shippingAddress, razorpayOrderId, couponCode } = await req.json()
 
     const cart = await Cart.findOne({ user: userId }).populate('items.product')
     if (!cart || cart.items.length === 0) {
@@ -61,13 +62,16 @@ export async function POST(req: NextRequest) {
     // Shipping is computed server-side from admin settings (authoritative).
     const settings = await StoreSettings.findOne().lean<{ shippingCharge: number; freeShippingThreshold: number }>()
     const shipping = calcShipping(subtotal, settings ?? DEFAULT_SHIPPING)
-    const total    = subtotal + shipping
+    const { discount, code } = await resolveCoupon(couponCode, subtotal)
+    const total    = subtotal - discount + shipping
 
     const order = await Order.create({
       user: userId,
       items,
       shippingAddress,
       subtotal,
+      discount,
+      couponCode: code,
       shipping,
       total,
       razorpayOrderId,
