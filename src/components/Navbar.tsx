@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import axios from 'axios'
 import { useRouter } from 'next/navigation'
 import { ShoppingBag, Search, User, Menu, X, LogOut, LayoutDashboard, Package } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQ, setSearchQ]       = useState('')
   const [profileOpen, setProfileOpen] = useState(false)
+  const [categories, setCategories] = useState<string[]>([])
   const { user, logout }  = useAuth()
   const { totalItems }    = useCart()
   const router            = useRouter()
@@ -24,6 +26,12 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    axios.get('/api/categories')
+      .then(({ data }) => setCategories((data.categories ?? []).map((c: { name: string }) => c.name)))
+      .catch(() => {})
+  }, [])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQ.trim()) {
@@ -32,8 +40,6 @@ export default function Navbar() {
       setSearchQ('')
     }
   }
-
-  const categories = ['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Kids']
 
   return (
     <>

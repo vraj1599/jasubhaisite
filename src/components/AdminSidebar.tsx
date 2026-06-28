@@ -2,18 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingCart, Users, Plus, LogOut, X, Megaphone, Sparkles, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, Users, Plus, LogOut, X, Megaphone, Sparkles, Settings, Tags } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const navItems = [
-  { href: '/admin',          icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/admin/products', icon: Package,         label: 'Products' },
-  { href: '/admin/orders',   icon: ShoppingCart,    label: 'Orders' },
-  { href: '/admin/users',    icon: Users,           label: 'Users' },
-  { href: '/admin/banners',  icon: Megaphone,       label: 'Banners' },
-  { href: '/admin/homepage', icon: Sparkles,        label: 'Homepage' },
-  { href: '/admin/settings', icon: Settings,        label: 'Settings' },
+  { href: '/admin',           icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/products',  icon: Package,         label: 'Products' },
+  { href: '/admin/categories',icon: Tags,            label: 'Categories' },
+  { href: '/admin/orders',    icon: ShoppingCart,    label: 'Orders' },
+  { href: '/admin/users',     icon: Users,           label: 'Users' },
+  { href: '/admin/banners',   icon: Megaphone,       label: 'Banners' },
+  { href: '/admin/homepage',  icon: Sparkles,        label: 'Homepage' },
+  { href: '/admin/settings',  icon: Settings,        label: 'Settings' },
 ]
 
 interface Props {

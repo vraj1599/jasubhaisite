@@ -1,7 +1,19 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import axios from 'axios'
 import { MapPin, Phone, Mail, Instagram, Facebook, Twitter } from 'lucide-react'
 
 export default function Footer() {
+  const [categories, setCategories] = useState<string[]>(['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Kids'])
+
+  useEffect(() => {
+    axios.get('/api/categories')
+      .then(({ data }) => setCategories((data.categories ?? []).map((c: { name: string }) => c.name)))
+      .catch(() => {})
+  }, [])
+
   return (
     <footer className="bg-gray-950 text-gray-400">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
@@ -34,7 +46,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4">Shop</h4>
             <ul className="space-y-2.5 text-sm">
-              {['Sandals', 'Chappals', 'Kolhapuri', 'Mojaris', 'Sports', 'Kids'].map((cat) => (
+              {categories.map((cat) => (
                 <li key={cat}>
                   <Link href={`/products?category=${cat}`} className="hover:text-amber-400 transition-colors duration-200">
                     {cat}

@@ -8,14 +8,7 @@ import { ArrowRight, Shield, Truck, RefreshCw, Award, ChevronRight, ChevronLeft 
 import ProductCard, { Product } from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
-const CATEGORIES = [
-  { name: 'Sandals',    emoji: '🩴', desc: 'Light & breezy' },
-  { name: 'Chappals',   emoji: '👡', desc: 'Daily comfort' },
-  { name: 'Kolhapuri',  emoji: '🥿', desc: 'Traditional craft' },
-  { name: 'Mojaris',    emoji: '👟', desc: 'Festival wear' },
-  { name: 'Sports',     emoji: '⚡', desc: 'Active lifestyle' },
-  { name: 'Kids',       emoji: '🌟', desc: 'Tiny feet, big fun' },
-]
+interface Category { name: string; emoji: string; description: string }
 
 const TRUST_BADGES = [
   { icon: Shield,   title: '100% Authentic',   desc: 'Genuine leather & materials' },
@@ -96,6 +89,7 @@ export default function HomeClient() {
   const [trending, setTrending] = useState<Product[]>([])
   const [banners, setBanners]   = useState<Banner[]>([])
   const [slider, setSlider]     = useState<{ active: boolean; title: string; subtitle: string; products: Product[] }>({ active: false, title: '', subtitle: '', products: [] })
+  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading]   = useState(true)
 
   useEffect(() => {
@@ -104,11 +98,13 @@ export default function HomeClient() {
       axios.get('/api/products?limit=8'),
       axios.get('/api/banners'),
       axios.get('/api/home-slider'),
-    ]).then(([f, t, b, s]) => {
+      axios.get('/api/categories'),
+    ]).then(([f, t, b, s, c]) => {
       setFeatured(f.data.products)
       setTrending(t.data.products)
       setBanners(b.data.banners ?? [])
       setSlider(s.data ?? { active: false, title: '', subtitle: '', products: [] })
+      setCategories(c.data.categories ?? [])
     }).finally(() => setLoading(false))
   }, [])
 
@@ -296,7 +292,7 @@ export default function HomeClient() {
               </div>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-              {CATEGORIES.map(({ name, emoji, desc }, i) => (
+              {categories.map(({ name, emoji, description: desc }, i) => (
                 <motion.div
                   key={name}
                   initial={{ opacity: 0, y: 20 }}
