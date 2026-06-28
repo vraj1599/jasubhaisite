@@ -11,6 +11,13 @@ out/
 build/
 dist/
 
+# Secrets / credentials
+awscredential/
+*.pem
+
+# Build info
+*.tsbuildinfo
+
 # Env files
 .env
 .env.local

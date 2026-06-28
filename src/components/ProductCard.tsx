@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ShoppingBag, Heart, Star } from 'lucide-react'
+import { ShoppingBag, Heart } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
@@ -99,14 +99,6 @@ export default function ProductCard({ product, index = 0 }: Props) {
             {product.name}
           </h3>
         </Link>
-
-        {/* Rating placeholder */}
-        <div className="flex items-center gap-1 mb-3">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} size={12} className={i < 4 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'} />
-          ))}
-          <span className="text-xs text-gray-500 ml-1">(4.0)</span>
-        </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2 mb-3">

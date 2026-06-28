@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import axios from 'axios'
 import { motion, useInView } from 'framer-motion'
-import { ArrowRight, Shield, Truck, RefreshCw, Award, ChevronRight } from 'lucide-react'
+import { ArrowRight, Shield, Truck, RefreshCw, Award, ChevronRight, ChevronLeft } from 'lucide-react'
 import ProductCard, { Product } from '@/components/ProductCard'
 import SkeletonCard from '@/components/SkeletonCard'
 
@@ -24,6 +24,25 @@ const TRUST_BADGES = [
   { icon: Award,    title: 'Best Quality',      desc: 'Crafted with care since 1985' },
 ]
 
+// Gradient presets shared with the admin banner editor.
+const BANNER_THEME: Record<string, string> = {
+  red:    'from-red-500 via-orange-500 to-amber-500',
+  amber:  'from-amber-500 to-orange-500',
+  green:  'from-emerald-500 to-green-600',
+  blue:   'from-sky-500 to-blue-600',
+  purple: 'from-fuchsia-500 to-purple-600',
+  dark:   'from-gray-800 to-gray-950',
+}
+
+interface Banner {
+  _id: string
+  title: string
+  subtitle: string
+  ctaText: string
+  ctaLink: string
+  theme: string
+}
+
 function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref    = useRef(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
@@ -39,37 +58,59 @@ function FadeInSection({ children, delay = 0 }: { children: React.ReactNode; del
   )
 }
 
+// Horizontally scrolling product carousel with arrow controls.
+function ProductSlider({ products }: { products: Product[] }) {
+  const scroller = useRef<HTMLDivElement>(null)
+  const scrollBy = (dir: number) => {
+    scroller.current?.scrollBy({ left: dir * 260 * 2, behavior: 'smooth' })
+  }
+  return (
+    <div className="relative">
+      <button
+        onClick={() => scrollBy(-1)}
+        aria-label="Scroll left"
+        className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-white border border-gray-200 rounded-full shadow-md hover:bg-amber-50 transition-colors"
+      >
+        <ChevronLeft size={20} className="text-gray-700" />
+      </button>
+      <div ref={scroller} className="flex gap-5 overflow-x-auto pb-4 snap-x scroll-smooth" style={{ scrollbarWidth: 'none' }}>
+        {products.map((p, i) => (
+          <div key={p._id} className="w-[200px] sm:w-[230px] flex-shrink-0 snap-start">
+            <ProductCard product={p} index={i} />
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => scrollBy(1)}
+        aria-label="Scroll right"
+        className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-white border border-gray-200 rounded-full shadow-md hover:bg-amber-50 transition-colors"
+      >
+        <ChevronRight size={20} className="text-gray-700" />
+      </button>
+    </div>
+  )
+}
+
 export default function HomeClient() {
   const [featured, setFeatured] = useState<Product[]>([])
   const [trending, setTrending] = useState<Product[]>([])
+  const [banners, setBanners]   = useState<Banner[]>([])
+  const [slider, setSlider]     = useState<{ active: boolean; title: string; subtitle: string; products: Product[] }>({ active: false, title: '', subtitle: '', products: [] })
   const [loading, setLoading]   = useState(true)
-  const [timeLeft, setTimeLeft] = useState({ h: 5, m: 47, s: 30 })
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((t) => {
-        let { h, m, s } = t
-        s--
-        if (s < 0) { s = 59; m-- }
-        if (m < 0) { m = 59; h-- }
-        if (h < 0) return { h: 5, m: 59, s: 59 }
-        return { h, m, s }
-      })
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     Promise.all([
       axios.get('/api/products?featured=true&limit=4'),
       axios.get('/api/products?limit=8'),
-    ]).then(([f, t]) => {
+      axios.get('/api/banners'),
+      axios.get('/api/home-slider'),
+    ]).then(([f, t, b, s]) => {
       setFeatured(f.data.products)
       setTrending(t.data.products)
+      setBanners(b.data.banners ?? [])
+      setSlider(s.data ?? { active: false, title: '', subtitle: '', products: [] })
     }).finally(() => setLoading(false))
   }, [])
-
-  const pad = (n: number) => String(n).padStart(2, '0')
 
   return (
     <main>
@@ -91,7 +132,7 @@ export default function HomeClient() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-400 text-sm font-medium mb-6"
             >
               <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-              Trusted by 50,000+ customers
+              Handcrafted in India since 1985
             </motion.div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-none mb-6">
@@ -131,16 +172,6 @@ export default function HomeClient() {
                   View Kolhapuri
                 </motion.button>
               </Link>
-            </div>
-
-            {/* Stats */}
-            <div className="flex gap-8 mt-10">
-              {[['50K+', 'Happy Customers'], ['200+', 'Products'], ['1985', 'Est. Year']].map(([num, label]) => (
-                <div key={label}>
-                  <p className="text-2xl font-black text-white">{num}</p>
-                  <p className="text-sm text-gray-400">{label}</p>
-                </div>
-              ))}
             </div>
           </motion.div>
 
@@ -195,42 +226,64 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* Flash Sale Banner */}
-      <FadeInSection delay={0.1}>
-        <section className="py-8">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="bg-gradient-to-r from-red-500 via-orange-500 to-amber-500 rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 overflow-hidden relative">
-              <div className="absolute inset-0 opacity-10"
-                style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '12px 12px' }}
-              />
-              <div className="relative text-white text-center sm:text-left">
-                <p className="font-bold text-sm uppercase tracking-widest mb-1">Flash Sale</p>
-                <h3 className="text-3xl font-black">Up to 60% OFF!</h3>
-                <p className="text-white/90 mt-1">On selected Kolhapuri & Sandals</p>
-              </div>
-              <div className="relative flex items-center gap-3">
-                {[{ v: pad(timeLeft.h), l: 'HRS' }, { v: pad(timeLeft.m), l: 'MIN' }, { v: pad(timeLeft.s), l: 'SEC' }].map(({ v, l }) => (
-                  <div key={l} className="text-center">
-                    <div className="w-16 h-16 bg-black/30 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                      <span className="text-white font-black text-2xl tabular-nums">{v}</span>
-                    </div>
-                    <p className="text-white/80 text-xs font-bold mt-1">{l}</p>
-                  </div>
-                ))}
-              </div>
-              <Link href="/products" className="relative">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-6 py-3 bg-white text-orange-600 font-black rounded-xl shadow-lg hover:shadow-xl transition-all"
+      {/* Sales Banners (admin-managed) */}
+      {banners.length > 0 && (
+        <FadeInSection delay={0.1}>
+          <section className="py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
+              {banners.map((banner) => (
+                <div
+                  key={banner._id}
+                  className={`bg-gradient-to-r ${BANNER_THEME[banner.theme] ?? BANNER_THEME.amber} rounded-3xl p-8 flex flex-col sm:flex-row items-center justify-between gap-6 overflow-hidden relative`}
                 >
-                  Grab Deal
-                </motion.button>
-              </Link>
+                  <div className="absolute inset-0 opacity-10"
+                    style={{ backgroundImage: 'repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%)', backgroundSize: '12px 12px' }}
+                  />
+                  <div className="relative text-white text-center sm:text-left">
+                    <h3 className="text-3xl font-black">{banner.title}</h3>
+                    {banner.subtitle && <p className="text-white/90 mt-1">{banner.subtitle}</p>}
+                  </div>
+                  <Link href={banner.ctaLink || '/products'} className="relative">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-3 bg-white text-gray-900 font-black rounded-xl shadow-lg hover:shadow-xl transition-all"
+                    >
+                      {banner.ctaText || 'Shop Now'}
+                    </motion.button>
+                  </Link>
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
-      </FadeInSection>
+          </section>
+        </FadeInSection>
+      )}
+
+      {/* Admin-managed Product Slider */}
+      {slider.active && slider.products.length > 0 && (
+        <FadeInSection delay={0.1}>
+          <section className="py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-3xl font-black text-gray-900">{slider.title}</h2>
+                  {slider.subtitle && <p className="text-gray-500 mt-1">{slider.subtitle}</p>}
+                </div>
+                <Link href="/products" className="flex items-center gap-1 text-amber-600 font-semibold text-sm hover:underline">
+                  View All <ChevronRight size={16} />
+                </Link>
+              </div>
+              {loading ? (
+                <div className="flex gap-5 overflow-hidden">
+                  {Array(4).fill(0).map((_, i) => <div key={i} className="w-[230px] flex-shrink-0"><SkeletonCard /></div>)}
+                </div>
+              ) : (
+                <ProductSlider products={slider.products} />
+              )}
+            </div>
+          </section>
+        </FadeInSection>
+      )}
 
       {/* Categories */}
       <FadeInSection delay={0.1}>

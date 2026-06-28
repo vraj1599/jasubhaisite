@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import axios from 'axios'
-import { ShoppingBag, Zap, Shield, Truck, RefreshCw, Star, ChevronLeft } from 'lucide-react'
+import { ShoppingBag, Zap, Shield, Truck, RefreshCw, ChevronLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { useCart } from '@/context/CartContext'
@@ -122,16 +122,6 @@ export default function ProductDetailClient({ id }: { id: string }) {
             <div>
               <p className="text-sm font-semibold text-amber-600 uppercase tracking-wider mb-2">{product.category}</p>
               <h1 className="text-3xl font-black text-gray-900 leading-tight">{product.name}</h1>
-
-              {/* Rating */}
-              <div className="flex items-center gap-2 mt-3">
-                <div className="flex">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={16} className={i < 4 ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'} />
-                  ))}
-                </div>
-                <span className="text-sm text-gray-600 font-medium">4.2 (128 reviews)</span>
-              </div>
             </div>
 
             {/* Price */}
@@ -237,34 +227,6 @@ export default function ProductDetailClient({ id }: { id: string }) {
               <p className="text-gray-600 leading-relaxed text-sm">{product.description}</p>
             </div>
 
-            {/* Reviews Placeholder */}
-            <div className="border-t border-gray-100 pt-6">
-              <h3 className="font-bold text-gray-900 mb-4">Customer Reviews</h3>
-              <div className="space-y-4">
-                {[
-                  { name: 'Ramesh P.', rating: 5, review: 'Excellent quality! Very comfortable for daily use. True to size.', date: '2 days ago' },
-                  { name: 'Priya S.', rating: 4, review: 'Good product, nice stitching. Delivery was fast too!', date: '1 week ago' },
-                ].map(({ name, rating, review, date }) => (
-                  <div key={name} className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                          <span className="text-amber-700 font-bold text-xs">{name[0]}</span>
-                        </div>
-                        <span className="font-semibold text-sm text-gray-900">{name}</span>
-                      </div>
-                      <span className="text-xs text-gray-400">{date}</span>
-                    </div>
-                    <div className="flex mb-2">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={12} className={i < rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300 fill-gray-200'} />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-600">{review}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
