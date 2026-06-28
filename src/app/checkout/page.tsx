@@ -101,8 +101,9 @@ export default function CheckoutPage() {
 
       const rzp = new window.Razorpay(options)
       rzp.open()
-    } catch {
-      toast.error('Something went wrong')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Something went wrong'
+      toast.error(msg)
     } finally {
       setLoading(false)
     }

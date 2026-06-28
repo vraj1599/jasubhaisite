@@ -43,6 +43,19 @@ export async function POST(req: NextRequest) {
       }
     })
 
+    // Validate stock availability before creating the order (prevents overselling).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    for (const item of cart.items as any[]) {
+      const product = item.product as Record<string, unknown>
+      const stock = Number(product.stock ?? 0)
+      if (stock < item.quantity) {
+        return NextResponse.json(
+          { message: `Insufficient stock for ${product.name}. Only ${stock} left.` },
+          { status: 409 }
+        )
+      }
+    }
+
     const subtotal = items.reduce((s: number, i: { price: number; quantity: number }) => s + i.price * i.quantity, 0)
 
     // Shipping is computed server-side from admin settings (authoritative).

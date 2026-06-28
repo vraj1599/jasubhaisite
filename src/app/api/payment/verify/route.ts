@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { connectDB } from '@/lib/db'
 import Order from '@/models/Order'
 import Cart from '@/models/Cart'
-import { verifyRazorpaySignature } from '@/lib/razorpay'
+import Product from '@/models/Product'
+import { razorpay, verifyRazorpaySignature } from '@/lib/razorpay'
 import { requireAuth } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
@@ -16,18 +17,40 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB()
-    const order = await Order.findOneAndUpdate(
-      { _id: orderId, user: userId },
-      {
-        razorpayPaymentId,
-        razorpaySignature,
-        paymentStatus: 'paid',
-        status: 'confirmed',
-      },
-      { new: true }
-    )
 
+    // Load the order first so we can reconcile the paid amount against it.
+    const order = await Order.findOne({ _id: orderId, user: userId })
     if (!order) return NextResponse.json({ message: 'Order not found' }, { status: 404 })
+
+    // Idempotency: if already paid, just return it (avoids double stock decrement).
+    if (order.paymentStatus === 'paid') {
+      return NextResponse.json({ message: 'Payment verified', order })
+    }
+
+    // SECURITY: confirm the amount actually charged by Razorpay equals the
+    // server-computed order total — defends against any amount tampering.
+    const rzpOrder = await razorpay.orders.fetch(razorpayOrderId)
+    if (Number(rzpOrder.amount) !== Math.round(order.total * 100)) {
+      order.paymentStatus = 'failed'
+      await order.save()
+      return NextResponse.json({ message: 'Payment amount mismatch' }, { status: 400 })
+    }
+
+    order.razorpayPaymentId = razorpayPaymentId
+    order.razorpaySignature = razorpaySignature
+    order.paymentStatus     = 'paid'
+    order.status            = 'confirmed'
+    await order.save()
+
+    // Decrement stock atomically (guard prevents going negative on races).
+    await Promise.all(
+      order.items.map((item: { product: unknown; quantity: number }) =>
+        Product.updateOne(
+          { _id: item.product, stock: { $gte: item.quantity } },
+          { $inc: { stock: -item.quantity } }
+        )
+      )
+    )
 
     await Cart.findOneAndUpdate({ user: userId }, { items: [] })
 
