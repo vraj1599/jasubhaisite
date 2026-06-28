@@ -6,10 +6,11 @@ import Product from '@/models/Product'
 import Coupon from '@/models/Coupon'
 import { razorpay, verifyRazorpaySignature } from '@/lib/razorpay'
 import { requireAuth } from '@/lib/auth'
+import { sendEmail, orderConfirmationEmail } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId } = requireAuth(req)
+    const { userId, email } = requireAuth(req)
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, orderId } = await req.json()
 
     const isValid = verifyRazorpaySignature(razorpayOrderId, razorpayPaymentId, razorpaySignature)
@@ -59,6 +60,21 @@ export async function POST(req: NextRequest) {
     }
 
     await Cart.findOneAndUpdate({ user: userId }, { items: [] })
+
+    // Send the order confirmation email (best-effort — never blocks the response).
+    if (email) {
+      const { subject, html } = orderConfirmationEmail({
+        _id: String(order._id),
+        items: order.items.map((i: { name: string; size: string; quantity: number; price: number }) => ({
+          name: i.name, size: i.size, quantity: i.quantity, price: i.price,
+        })),
+        subtotal: order.subtotal,
+        discount: order.discount ?? 0,
+        shipping: order.shipping,
+        total: order.total,
+      })
+      await sendEmail({ to: email, subject, html })
+    }
 
     return NextResponse.json({ message: 'Payment verified', order })
   } catch (err: unknown) {

@@ -9,6 +9,8 @@ export interface IUser extends Document {
   googleId?: string
   avatar?: string
   role: 'user' | 'admin'
+  resetToken?: string | null
+  resetTokenExpiry?: Date | null
   address: {
     line1: string
     locality: string
@@ -30,6 +32,8 @@ const UserSchema = new Schema<IUser>(
     googleId: { type: String, default: null, index: true },
     avatar:   { type: String, default: '' },
     role:     { type: String, enum: ['user', 'admin'], default: 'user' },
+    resetToken:       { type: String, default: null },
+    resetTokenExpiry: { type: Date, default: null },
     address: {
       line1:    { type: String, default: '' },
       locality: { type: String, default: '' },

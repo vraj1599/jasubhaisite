@@ -111,6 +111,10 @@ function LoginContent() {
               </button>
             </div>
 
+            <div className="flex justify-end -mt-1">
+              <Link href="/forgot-password" className="text-xs text-amber-400 hover:underline">Forgot password?</Link>
+            </div>
+
             <motion.button
               type="submit"
               disabled={loading}
